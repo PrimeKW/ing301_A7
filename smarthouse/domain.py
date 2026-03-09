@@ -1,76 +1,156 @@
+from datetime import datetime
+import random
+
+
 class Measurement:
-    """
-    This class represents a measurement taken from a sensor.
-    """
+    def __init__(self, timestamp: str, value: float, unit: str):
+        self.timestamp = str(timestamp)
+        self.value = float(value)
+        self.unit = str(unit)
 
-    def __init__(self, timestamp, value, unit):
-        self.timestamp = timestamp
-        self.value = value
+
+"""Etasje og rom"""
+
+
+class Floor:
+    def __init__(self, level):
+        self.level = int(level)
+        self.rooms = []
+
+
+class Room:
+    def __init__(self, floor, room_size, room_name=None):
+        self.floor = floor
+        self.room_size = float(room_size)
+        self.room_name = room_name
+        self.devices = []
+
+
+"""Enheter"""
+
+
+class Device:
+    def __init__(self, id, device_type, device_name, supplier):
+        self.id = str(id)
+        self.supplier = supplier
+        self.model_name = device_name
+        self.device_name = device_name
+        self.device_type = device_type
+        self.room = None
+
+    def is_actuator(self):
+        return False
+
+    def is_sensor(self):
+        return False
+
+    def get_device_type(self):
+        return str(self.device_type)
+
+
+class Sensor(Device):
+    def __init__(self, id, device_type, device_name, supplier, unit=None):
+        super().__init__(id, device_type, device_name, supplier)
         self.unit = unit
+        self._measurements = []
+
+    def is_sensor(self):
+        return True
+
+    def add_measurement(self, value=None, unit=None):
+        if unit is None:
+            if self.unit is None:
+                raise ValueError("Unit må oppgis første gang (eller settes på sensoren).")
+            unit = self.unit
+        else:
+            self.unit = unit
+
+        if value is None:
+            value = random.uniform(0.0, 100.0)
+
+        ts = datetime.now().isoformat(timespec="seconds")
+        self._measurements.append(Measurement(ts, float(value), unit))
+
+    def last_measurement(self):
+        if self._measurements:
+            return self._measurements[-1]
+
+        if self.unit is None:
+            raise ValueError("Sensorens unit er ikke satt.")
+        ts = datetime.now().isoformat(timespec="seconds")
+        return Measurement(ts, float(random.uniform(0.0, 100.0)), self.unit)
+
+    def get_measurements(self):
+        return list(self._measurements)
 
 
+class Actuator(Device):
+    def __init__(self, id, device_type, device_name, supplier):
+        super().__init__(id, device_type, device_name, supplier)
+        self._active = False
+        self.target_value = None
 
-# TODO: Add your own classes here!
+    def is_actuator(self):
+        return True
+
+    def turn_on(self, target_value=None):
+        self._active = True
+        if target_value is not None:
+            self.target_value = target_value
+
+    def turn_off(self):
+        self._active = False
+        self.target_value = None
+
+    def is_active(self):
+        return self._active
 
 
 class SmartHouse:
-    """
-    This class serves as the main entity and entry point for the SmartHouse system app.
-    Do not delete this class nor its predefined methods since other parts of the
-    application may depend on it (you are free to add as many new methods as you like, though).
-
-    The SmartHouse class provides functionality to register rooms and floors (i.e. changing the 
-    house's physical layout) as well as register and modify smart devices and their state.
-    """
+    def __init__(self):
+        self._devices = []
+        self._rooms = []
+        self._floors = []
 
     def register_floor(self, level):
-        """
-        This method registers a new floor at the given level in the house
-        and returns the respective floor object.
-        """
+        floor = Floor(level)
+        self._floors.append(floor)
+        self._floors.sort(key=lambda x: x.level)
+        return floor
 
-    def register_room(self, floor, room_size, room_name = None):
-        """
-        This methods registers a new room with the given room areal size 
-        at the given floor. Optionally the room may be assigned a mnemonic name.
-        """
-        pass
-
+    def register_room(self, floor, room_size, room_name=None):
+        room = Room(floor, room_size, room_name)
+        floor.rooms.append(room)
+        self._rooms.append(room)
+        return room
 
     def get_floors(self):
-        """
-        This method returns the list of registered floors in the house.
-        The list is ordered by the floor levels, e.g. if the house has 
-        registered a basement (level=0), a ground floor (level=1) and a first floor 
-        (leve=1), then the resulting list contains these three flors in the above order.
-        """
-        pass
-
+        return list(self._floors)
 
     def get_rooms(self):
-        """
-        This methods returns the list of all registered rooms in the house.
-        The resulting list has no particular order.
-        """
-        pass
-
+        return list(self._rooms)
 
     def get_area(self):
-        """
-        This methods return the total area size of the house, i.e. the sum of the area sizes of each room in the house.
-        """
-
+        return round(sum(r.room_size for r in self._rooms), 2)
 
     def register_device(self, room, device):
-        """
-        This methods registers a given device in a given room.
-        """
-        pass
+        if device.room is not None and device.room is not room:
+            old_room = device.room
+            if device in old_room.devices:
+                old_room.devices.remove(device)
 
-    
-    def get_device(self, device_id):
-        """
-        This method retrieves a device object via its id.
-        """
-        pass
+        device.room = room
+        if device not in room.devices:
+            room.devices.append(device)
 
+        if device not in self._devices:
+            self._devices.append(device)
+
+    def get_devices(self):
+        return list(self._devices)
+
+    def get_device_by_id(self, device_id):
+        for d in self._devices:
+            if d.id == device_id:
+                return d
+        return None

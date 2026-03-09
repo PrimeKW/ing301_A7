@@ -4,8 +4,7 @@ from pathlib import Path
 import sys 
 sys.path.append(str(Path().parent.absolute()))
 
-from smarthouse.domain import SmartHouse
-from demo_house import DEMO_HOUSE as h
+from tests.demo_house import DEMO_HOUSE as h
 
 class TestPartA(TestCase):
 
@@ -37,14 +36,14 @@ class TestPartA(TestCase):
         self.assertEqual(motion_sensor.id, "cd5be4e8-0e6b-4cb5-a21f-819d06cf5fc5")
         self.assertEqual(motion_sensor.device_type, "Motion Sensor")
         self.assertEqual(motion_sensor.supplier, "NebulaGuard Innovations")
-        self.assertEqual(motion_sensor.model_name, "MoveZ Detect 69")
+        self.assertEqual(motion_sensor.device_name, "MoveZ Detect 69")
         self.assertTrue(motion_sensor.is_sensor())
         self.assertFalse(motion_sensor.is_actuator())
         bulp = h.get_device_by_id("6b1c5f6b-37f6-4e3d-9145-1cfbe2f1fc28")
         self.assertEqual(bulp.id, "6b1c5f6b-37f6-4e3d-9145-1cfbe2f1fc28")
         self.assertEqual(bulp.device_type, "Light Bulp")
         self.assertEqual(bulp.supplier, "Elysian Tech")
-        self.assertEqual(bulp.model_name, "Lumina Glow 4000")
+        self.assertEqual(bulp.device_name, "Lumina Glow 4000")
         self.assertTrue(bulp.is_actuator())
         self.assertFalse(bulp.is_sensor())
         # also they know about their room and rooms know about their devices
@@ -52,7 +51,7 @@ class TestPartA(TestCase):
         self.assertTrue(motion_sensor in living_room.devices)
         self.assertEqual(len(living_room.devices), 3)
 
-    def test_intermediate_sensor_measurements(self):
+    def test_intermediate_sensor_measurement(self):
         temp = h.get_device_by_id("4d8b1d62-7921-4917-9b70-bbd31f6e2e8e")
         m = temp.last_measurement()
         # Measurements are recorded in celsius and values a floating point numbers
