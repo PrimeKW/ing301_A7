@@ -22,41 +22,41 @@ class SmartHouseRepository:
         c = self.conn.cursor()
         house = SmartHouse()
 
-        # Floors
-        floors_by_id = {}
-        c.execute("SELECT id, level FROM floors")
-        for floor_id, level in c.fetchall():
-            floor = Floor(level)
-            floors_by_id[floor_id] = floor
-            house._floors.append(floor)
-
-        # Rooms
+        # Rooms + Floors
         rooms_by_id = {}
-        c.execute("SELECT id, floor_id, room_size, room_name FROM rooms")
-        for room_id, floor_id, room_size, room_name in c.fetchall():
-            floor = floors_by_id[floor_id]
+        floors_by_level = {}
+
+        c.execute("SELECT id, floor, area, name FROM rooms")
+        for room_id, floor_level, room_size, room_name in c.fetchall():
+            if floor_level not in floors_by_level:
+                floor = Floor(floor_level)
+                floors_by_level[floor_level] = floor
+                house._floors.append(floor)
+            else:
+                floor = floors_by_level[floor_level]
+
             room = Room(floor, room_size, room_name)
+            room.id = room_id
             rooms_by_id[room_id] = room
             floor.rooms.append(room)
             house._rooms.append(room)
 
         # Devices
-        c.execute("SELECT id, room_id, device_type, model_name, supplier FROM devices")
-        for device_id, room_id, device_type, model_name, supplier in c.fetchall():
+        c.execute("SELECT id, room, kind, category, supplier, product FROM devices")
+        for device_id, room_id, kind, category, supplier, product in c.fetchall():
             room = rooms_by_id[room_id]
-            dt = device_type.lower()
 
-            if "sensor" in dt or dt in ["temperature", "humidity", "motion"]:
-                device = Sensor(device_id, device_type, model_name, supplier)
+            if category.lower() == "sensor":
+                device = Sensor(device_id, kind, product, supplier)
             else:
-                device = Actuator(device_id, device_type, model_name, supplier)
+                device = Actuator(device_id, kind, product, supplier)
 
             device.room = room
             room.devices.append(device)
             house._devices.append(device)
 
         # Measurements
-        c.execute("SELECT device_id, timestamp, value, unit FROM measurements")
+        c.execute("SELECT device, ts, value, unit FROM measurements")
         for device_id, timestamp, value, unit in c.fetchall():
             device = house.get_device_by_id(device_id)
             if isinstance(device, Sensor):
@@ -72,7 +72,6 @@ class SmartHouseRepository:
             c.execute("SELECT device_id, is_active, target_value FROM actuator_states")
             for device_id, is_active, target_value in c.fetchall():
                 device = house.get_device_by_id(device_id)
-
                 if isinstance(device, Actuator):
                     if is_active:
                         device.turn_on(target_value)
@@ -83,19 +82,17 @@ class SmartHouseRepository:
         return house
 
     def get_latest_reading(self, sensor) -> Optional[Measurement]:
-
         if sensor is None or not sensor.is_sensor():
             return None
 
         c = self.conn.cursor()
         c.execute("""
-            SELECT timestamp, value, unit
+            SELECT ts, value, unit
             FROM measurements
-            WHERE device_id = ?
-            ORDER BY timestamp DESC
+            WHERE device = ?
+            ORDER BY ts DESC
             LIMIT 1
         """, (sensor.id,))
-
         row = c.fetchone()
         c.close()
 
@@ -106,7 +103,6 @@ class SmartHouseRepository:
         return Measurement(timestamp, value, unit)
 
     def update_actuator_state(self, actuator):
-
         if actuator is None or not actuator.is_actuator():
             return
 
@@ -133,8 +129,63 @@ class SmartHouseRepository:
         self.conn.commit()
         c.close()
 
-    def calc_avg_temperatures_in_room(self, room, from_date: Optional[str] = None, until_date: Optional[str] = None) -> dict:
-        return NotImplemented
+    def calc_avg_temperatures_in_room(self, room, from_date: Optional[str] = None,
+                                      until_date: Optional[str] = None) -> dict:
+        c = self.conn.cursor()
+
+        query = """
+                SELECT substr(m.ts, 1, 10) AS day,
+                   ROUND(AVG(m.value), 4) AS avg_temp
+                FROM measurements m
+                    JOIN devices d \
+                ON m.device = d.id
+                WHERE d.room = ?
+                  AND m.unit = '°C' \
+                """
+        params = [room.id]
+
+        if from_date is not None:
+            query += " AND substr(m.ts, 1, 10) >= ?"
+            params.append(from_date)
+
+        if until_date is not None:
+            query += " AND substr(m.ts, 1, 10) <= ?"
+            params.append(until_date)
+
+        query += """
+            GROUP BY substr(m.ts, 1, 10)
+            ORDER BY day
+        """
+
+        c.execute(query, params)
+        rows = c.fetchall()
+        c.close()
+
+        return {day: avg_temp for day, avg_temp in rows}
 
     def calc_hours_with_humidity_above(self, room, date: str) -> list:
-        return NotImplemented
+        c = self.conn.cursor()
+
+        query = """
+                WITH room_humidity AS 
+                            (SELECT m.ts, m.value \
+                            FROM measurements m \
+                            JOIN devices d ON m.device = d.id \
+                            WHERE d.room = ? \
+                            AND lower(d.kind) LIKE '%humidity%' \
+                            AND substr(m.ts, 1, 10) = ?),
+                     avg_humidity AS (SELECT AVG(value) AS avg_val \
+                            FROM room_humidity)
+                SELECT CAST(substr(rh.ts, 12, 2) AS INTEGER) AS hour
+                FROM room_humidity rh, avg_humidity ah
+                WHERE rh.value > ah.avg_val
+                GROUP BY hour
+                HAVING COUNT (*) > 3
+                ORDER BY hour \
+                """
+
+        c.execute(query, (room.id, date))
+        rows = c.fetchall()
+        c.close()
+
+        return [hour for (hour,) in rows]
