@@ -1,90 +1,140 @@
 import sqlite3
 from typing import Optional
-from smarthouse.domain import Measurement
+from smarthouse.domain import Measurement, SmartHouse, Floor, Room, Sensor, Actuator
+
 
 class SmartHouseRepository:
-    """
-    Provides the functionality to persist and load a _SmartHouse_ object 
-    in a SQLite database.
-    """
-
     def __init__(self, file: str) -> None:
-        self.file = file 
+        self.file = file
         self.conn = sqlite3.connect(file, check_same_thread=False)
 
     def __del__(self):
         self.conn.close()
 
     def cursor(self) -> sqlite3.Cursor:
-        """
-        Provides a _raw_ SQLite cursor to interact with the database.
-        When calling this method to obtain a cursors, you have to 
-        rememeber calling `commit/rollback` and `close` yourself when
-        you are done with issuing SQL commands.
-        """
         return self.conn.cursor()
 
     def reconnect(self):
         self.conn.close()
         self.conn = sqlite3.connect(self.file)
 
-    
     def load_smarthouse_deep(self):
-        """
-        This method retrives the complete single instance of the _SmartHouse_ 
-        object stored in this database. The retrieval yields a _deep_ copy, i.e.
-        all referenced objects within the object structure (e.g. floors, rooms, devices) 
-        are retrieved as well. 
-        """
-        # TODO: START here! remove the following stub implementation and implement this function 
-        #       by retrieving the data from the database via SQL `SELECT` statements.
-        return NotImplemented
+        c = self.conn.cursor()
+        house = SmartHouse()
 
+        # Floors
+        floors_by_id = {}
+        c.execute("SELECT id, level FROM floors")
+        for floor_id, level in c.fetchall():
+            floor = Floor(level)
+            floors_by_id[floor_id] = floor
+            house._floors.append(floor)
+
+        # Rooms
+        rooms_by_id = {}
+        c.execute("SELECT id, floor_id, room_size, room_name FROM rooms")
+        for room_id, floor_id, room_size, room_name in c.fetchall():
+            floor = floors_by_id[floor_id]
+            room = Room(floor, room_size, room_name)
+            rooms_by_id[room_id] = room
+            floor.rooms.append(room)
+            house._rooms.append(room)
+
+        # Devices
+        c.execute("SELECT id, room_id, device_type, model_name, supplier FROM devices")
+        for device_id, room_id, device_type, model_name, supplier in c.fetchall():
+            room = rooms_by_id[room_id]
+            dt = device_type.lower()
+
+            if "sensor" in dt or dt in ["temperature", "humidity", "motion"]:
+                device = Sensor(device_id, device_type, model_name, supplier)
+            else:
+                device = Actuator(device_id, device_type, model_name, supplier)
+
+            device.room = room
+            room.devices.append(device)
+            house._devices.append(device)
+
+        # Measurements
+        c.execute("SELECT device_id, timestamp, value, unit FROM measurements")
+        for device_id, timestamp, value, unit in c.fetchall():
+            device = house.get_device_by_id(device_id)
+            if isinstance(device, Sensor):
+                device._measurements.append(Measurement(timestamp, value, unit))
+
+        # Actuator states
+        c.execute("""
+            SELECT name
+            FROM sqlite_master
+            WHERE type='table' AND name='actuator_states'
+        """)
+        if c.fetchone():
+            c.execute("SELECT device_id, is_active, target_value FROM actuator_states")
+            for device_id, is_active, target_value in c.fetchall():
+                device = house.get_device_by_id(device_id)
+
+                if isinstance(device, Actuator):
+                    if is_active:
+                        device.turn_on(target_value)
+                    else:
+                        device.turn_off()
+
+        c.close()
+        return house
 
     def get_latest_reading(self, sensor) -> Optional[Measurement]:
-        """
-        Retrieves the most recent sensor reading for the given sensor if available.
-        Returns None if the given object has no sensor readings.
-        """
-        # TODO: After loading the smarthouse, continue here
-        return NotImplemented
 
+        if sensor is None or not sensor.is_sensor():
+            return None
+
+        c = self.conn.cursor()
+        c.execute("""
+            SELECT timestamp, value, unit
+            FROM measurements
+            WHERE device_id = ?
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """, (sensor.id,))
+
+        row = c.fetchone()
+        c.close()
+
+        if row is None:
+            return None
+
+        timestamp, value, unit = row
+        return Measurement(timestamp, value, unit)
 
     def update_actuator_state(self, actuator):
-        """
-        Saves the state of the given actuator in the database. 
-        """
-        # TODO: Implement this method. You will probably need to extend the existing database structure: e.g.
-        #       by creating a new table (`CREATE`), adding some data to it (`INSERT`) first, and then issue
-        #       and SQL `UPDATE` statement. Remember also that you will have to call `commit()` on the `Connection`
-        #       stored in the `self.conn` instance variable.
-        pass
 
+        if actuator is None or not actuator.is_actuator():
+            return
 
-    # statistics
+        c = self.conn.cursor()
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS actuator_states (
+                device_id TEXT PRIMARY KEY,
+                is_active INTEGER NOT NULL,
+                target_value REAL
+            )
+        """)
 
-    
+        is_active = 1 if actuator.is_active() else 0
+        target_value = actuator.target_value
+
+        c.execute("""
+            INSERT INTO actuator_states (device_id, is_active, target_value)
+            VALUES (?, ?, ?)
+            ON CONFLICT(device_id) DO UPDATE SET
+                is_active = excluded.is_active,
+                target_value = excluded.target_value
+        """, (actuator.id, is_active, target_value))
+
+        self.conn.commit()
+        c.close()
+
     def calc_avg_temperatures_in_room(self, room, from_date: Optional[str] = None, until_date: Optional[str] = None) -> dict:
-        """Calculates the average temperatures in the given room for the given time range by
-        fetching all available temperature sensor data (either from a dedicated temperature sensor 
-        or from an actuator, which includes a temperature sensor like a heat pump) from the devices 
-        located in that room, filtering the measurement by given time range.
-        The latter is provided by two strings, each containing a date in the ISO 8601 format.
-        If one argument is empty, it means that the upper and/or lower bound of the time range are unbounded.
-        The result should be a dictionary where the keys are strings representing dates (iso format) and 
-        the values are floating point numbers containing the average temperature that day.
-        """
-        # TODO: This and the following statistic method are a bit more challenging. Try to design the respective 
-        #       SQL statements first in a SQL editor like Dbeaver and then copy it over here.  
         return NotImplemented
 
-    
     def calc_hours_with_humidity_above(self, room, date: str) -> list:
-        """
-        This function determines during which hours of the given day
-        there were more than three measurements in that hour having a humidity measurement that is above
-        the average recorded humidity in that room at that particular time.
-        The result is a (possibly empty) list of number representing hours [0-23].
-        """
-        # TODO: implement
         return NotImplemented
