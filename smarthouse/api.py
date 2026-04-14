@@ -1,13 +1,13 @@
-import uvicorn
+import os
+from pathlib import Path
 
+import uvicorn
 from fastapi import FastAPI, Response
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from tests.demo_house import DEMO_HOUSE
-
-from smarthouse.domain import Actuator, Sensor
 from smarthouse.dto import (
     SmartHouseInfo,
     FloorInfo,
@@ -17,11 +17,7 @@ from smarthouse.dto import (
     MeasurementInfo,
 )
 
-from pathlib import Path
-import os
-
 app = FastAPI()
-
 smarthouse = DEMO_HOUSE
 
 if not (Path.cwd() / "www").exists():
@@ -51,38 +47,41 @@ def get_smarthouse_info() -> SmartHouseInfo:
 
 @app.get("/smarthouse/floor")
 def get_floors() -> list[FloorInfo]:
-    return [FloorInfo.from_obj(x) for x in smarthouse.get_floors()]
+    return [FloorInfo.from_obj(floor) for floor in smarthouse.get_floors()]
 
 
 @app.get("/smarthouse/floor/{fid}")
 def get_floor(fid: int) -> Response:
-    for f in smarthouse.get_floors():
-        if f.level == fid:
-            return JSONResponse(content=jsonable_encoder(FloorInfo.from_obj(f)))
+    for floor in smarthouse.get_floors():
+        if floor.level == fid:
+            return JSONResponse(content=jsonable_encoder(FloorInfo.from_obj(floor)))
     return Response(status_code=404)
 
 
 @app.get("/smarthouse/floor/{fid}/room")
-def get_rooms(fid: int) -> list[RoomInfo]:
-    for f in smarthouse.get_floors():
-        if f.level == fid:
-            return [RoomInfo.from_obj(r) for r in f.rooms]
-    return []
+def get_rooms(fid: int) -> Response:
+    for floor in smarthouse.get_floors():
+        if floor.level == fid:
+            return JSONResponse(
+                content=jsonable_encoder([RoomInfo.from_obj(room) for room in floor.rooms])
+            )
+    return Response(status_code=404)
 
 
 @app.get("/smarthouse/floor/{fid}/room/{rid}")
 def get_room(fid: int, rid: int) -> Response:
-    for f in smarthouse.get_floors():
-        if f.level == fid:
-            for r in f.rooms:
-                if getattr(r, "rid", None) == rid:
-                    return JSONResponse(content=jsonable_encoder(RoomInfo.from_obj(r)))
+    for floor in smarthouse.get_floors():
+        if floor.level == fid:
+            for room in floor.rooms:
+                if room.rid == rid:
+                    return JSONResponse(content=jsonable_encoder(RoomInfo.from_obj(room)))
+            return Response(status_code=404)
     return Response(status_code=404)
 
 
 @app.get("/smarthouse/device")
 def get_devices() -> list[DeviceInfo]:
-    return [DeviceInfo.from_obj(d) for d in smarthouse.get_devices()]
+    return [DeviceInfo.from_obj(device) for device in smarthouse.get_devices()]
 
 
 @app.get("/smarthouse/device/{uuid}")
@@ -97,6 +96,16 @@ def get_device(uuid: str) -> Response:
 # API endpoints for sensor resources
 #
 
+@app.get("/smarthouse/sensor/{uuid}")
+def get_sensor(uuid: str) -> Response:
+    device = smarthouse.get_device_by_id(uuid)
+
+    if device is None or not device.is_sensor():
+        return Response(status_code=404)
+
+    return JSONResponse(content=jsonable_encoder(DeviceInfo.from_obj(device)))
+
+
 @app.get("/smarthouse/sensor/{uuid}/current")
 def read_measurement(uuid: str) -> Response:
     device = smarthouse.get_device_by_id(uuid)
@@ -105,15 +114,10 @@ def read_measurement(uuid: str) -> Response:
         return Response(status_code=404)
 
     measurement = device.last_measurement()
-    return JSONResponse(
-        content=jsonable_encoder(
-            {
-                "timestamp": measurement.timestamp,
-                "value": measurement.value,
-                "unit": measurement.unit,
-            }
-        )
-    )
+    if measurement is None:
+        return Response(status_code=404)
+
+    return JSONResponse(content=jsonable_encoder(MeasurementInfo.from_obj(measurement)))
 
 
 @app.put("/smarthouse/sensor/{uuid}/current", response_model=None)
@@ -127,18 +131,17 @@ def update_sensor_measurement(uuid: str, measurement: MeasurementInfo) -> Respon
     return Response(status_code=204)
 
 
-@app.delete("/smarthouse/sensor/{uuid}/oldest")
+@app.delete("/smarthouse/sensor/{uuid}/current")
 def delete_measurement(uuid: str) -> Response:
     device = smarthouse.get_device_by_id(uuid)
 
     if device is None or not device.is_sensor():
         return Response(status_code=404)
 
-    measurements = device.get_measurements()
-    if not measurements:
+    deleted = device.remove_current_measurement()
+    if deleted is None:
         return Response(status_code=404)
 
-    device._measurements.pop(0)
     return Response(status_code=204)
 
 
@@ -153,12 +156,14 @@ def read_actuator_state(uuid: str) -> Response:
     if device is None or not device.is_actuator():
         return Response(status_code=404)
 
-    state = ActuatorStateInfo(state=device.is_active())
+    state = ActuatorStateInfo(
+        state=device.is_active()
+    )
     return JSONResponse(content=jsonable_encoder(state))
 
 
 @app.put("/smarthouse/actuator/{uuid}/state", response_model=None)
-def update_sensor_state(uuid: str, target_state: ActuatorStateInfo) -> Response:
+def update_actuator_state(uuid: str, target_state: ActuatorStateInfo) -> Response:
     device = smarthouse.get_device_by_id(uuid)
 
     if device is None or not device.is_actuator():
@@ -172,5 +177,5 @@ def update_sensor_state(uuid: str, target_state: ActuatorStateInfo) -> Response:
     return Response(status_code=204)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
