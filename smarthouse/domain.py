@@ -19,7 +19,11 @@ class Floor:
 
 
 class Room:
+    _next_id = 1
+
     def __init__(self, floor, room_size, room_name=None):
+        self.rid = Room._next_id
+        Room._next_id += 1
         self.floor = floor
         self.room_size = float(room_size)
         self.room_name = room_name
@@ -104,6 +108,11 @@ class Actuator(Device):
 
     def is_active(self):
         return self._active
+
+class ActuatorWithSensor(Actuator):
+    def __init__(self, id, device_type, device_name, supplier, sensor: Sensor):
+        super().__init__(id, device_type, device_name, supplier)
+        self.sensor = sensor
 
 
 class SmartHouse:
