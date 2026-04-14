@@ -1,0 +1,15 @@
+info:
+  name: sensor/uuid/current/None
+  type: http
+  seq: 11
+
+http:
+  method: DELETE
+  url: http://127.0.0.1:8000/smarthouse/sensor/4d8b1d62-7921-4917-9b70-bbd31f6e2e8e/current
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

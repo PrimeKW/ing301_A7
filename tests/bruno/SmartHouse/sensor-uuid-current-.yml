@@ -1,0 +1,23 @@
+info:
+  name: sensor/uuid/current/
+  type: http
+  seq: 10
+
+http:
+  method: PUT
+  url: http://127.0.0.1:8000/smarthouse/sensor/4d8b1d62-7921-4917-9b70-bbd31f6e2e8e/current
+  body:
+    type: json
+    data: |-
+      {
+        "timestamp": "2026-04-07T11:20:54.469462",
+        "value": 5.9664148298010007,
+        "unit": "°C"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

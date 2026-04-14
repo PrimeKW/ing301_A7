@@ -1,0 +1,21 @@
+info:
+  name: actuator/uuid/state/
+  type: http
+  seq: 13
+
+http:
+  method: PUT
+  url: http://127.0.0.1:8000/smarthouse/actuator/6b1c5f6b-37f6-4e3d-9145-1cfbe2f1fc28/state
+  body:
+    type: json
+    data: |-
+      {
+        "state": "off"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
