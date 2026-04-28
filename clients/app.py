@@ -3,25 +3,12 @@ import requests
 
 
 class SmartHouseApp:
-    """
-    Class representing an end-user client application that can
-    interact with the device clients via the cloud service.
-
-    The application is highly simplistic being only capable of
-    controlling a temperature sensor and a light bulb actuator
-    """
-
     def __init__(self):
         self.sensor_did = common.TEMPERATURE_SENSOR_DID
         self.actuator_did = common.LIGHT_BULB_ACTUATOR_DID
 
     def get_bulb_state(self):
-        """
-        This method sends a GET request to the cloud state to obtain
-        the current state of the light bulb actuator
-        """
-
-        url = common.BASE_URL + f"actuator/{self.actuator_did}/state"
+        url = f"{common.BASE_URL}/smarthouse/actuator/{self.actuator_did}/state"
 
         try:
             response = requests.get(url, timeout=5)
@@ -37,33 +24,21 @@ class SmartHouseApp:
             print(f"Error while getting bulb state: {e}")
             return None
 
-    def update_bulb_state(self, new_state) -> requests.Response:
-        """
-        This method sends a PUT request to the cloud state to update
-        the current state of the light bulb actuator
-        """
+    def update_bulb_state(self, new_state) -> requests.Response | None:
+        url = f"{common.BASE_URL}/smarthouse/actuator/{self.actuator_did}/state"
 
-        url = common.BASE_URL + f"actuator/{self.actuator_did}/state"
-
-        if new_state == "on":
-            payload = {"state": True}
-        else:
-            payload = {"state": False}
+        payload = {
+            "state": new_state == "on"
+        }
 
         try:
-            response = requests.put(url, json=payload, timeout=5)
-            return response
+            return requests.put(url, json=payload, timeout=5)
         except requests.RequestException as e:
             print(f"Error while updating bulb state: {e}")
             return None
 
     def get_temperature(self):
-        """
-        This method sends a GET request to the cloud state to obtain
-        the current temperature recorded for the temperature sensor
-        """
-
-        url = common.BASE_URL + f"sensor/{self.sensor_did}/current"
+        url = f"{common.BASE_URL}/smarthouse/sensor/{self.sensor_did}/current"
 
         try:
             response = requests.get(url, timeout=5)
@@ -73,18 +48,16 @@ class SmartHouseApp:
                 return None
 
             measurement = common.SensorMeasurement.from_json_str(response.text)
-            return measurement.value
+            return f"{measurement.value} {measurement.unit}"
 
         except requests.RequestException as e:
             print(f"Error while getting temperature: {e}")
             return None
 
     def main(self):
-
         is_active = True
 
         while is_active:
-
             print("---- SmartHouse Control App ----")
             print("Select option:")
             print("1. Toggle Lightbulb")
@@ -100,7 +73,6 @@ class SmartHouseApp:
             selected_option = int(user_input)
 
             if selected_option == 1:
-
                 current_state = self.get_bulb_state()
 
                 if current_state is None:
@@ -109,21 +81,20 @@ class SmartHouseApp:
 
                 print(f"Current state lightbulb: {current_state}")
 
-                if current_state == "off" or current_state is False:
-                    current_state = "on"
+                if current_state is False:
+                    new_state = "on"
                 else:
-                    current_state = "off"
+                    new_state = "off"
 
-                response = self.update_bulb_state(current_state)
+                response = self.update_bulb_state(new_state)
 
                 if response is not None:
                     print(f"Update bulb response status: {response.status_code}")
 
-                new_state = self.get_bulb_state()
-                print(f"New state lightbulb: {new_state}")
+                updated_state = self.get_bulb_state()
+                print(f"New state lightbulb: {updated_state}")
 
             elif selected_option == 2:
-
                 value = self.get_temperature()
 
                 if value is not None:
@@ -135,6 +106,6 @@ class SmartHouseApp:
         print("App shutting down")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = SmartHouseApp()
     app.main()
