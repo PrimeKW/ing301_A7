@@ -1,0 +1,402 @@
+1. Innkapsling
+class Konto:
+    def __init__(self, saldo):
+        self._saldo = saldo
+
+    def sett_inn(self, beløp):
+        self._saldo += beløp
+Du manipulerer saldo gjennom metoder og ikke direkte
+
+2. Polymorfisme
+class Hund:
+    def lyd(self):
+        return "bjeff"
+
+class Katt:
+    def lyd(self):
+        return "mjau"
+Du bruker samme metode, men de gjør forskjellige ting
+
+3. UML til Python
+Klasse = class
+Attributt = variabler i __init__ f.eks (device_type eller room)
+Arv = class Sensor(Device) Sensor arver fra Device
+Assosiasjon
+    ↓
+class Room:
+    def __init__(self, floor: Floor, ...):
+        self.floor = floor
+Assosierer med at et room tilhører et floor/etasje
+
+4. Design pattern Composite
+Du kan behandle en ting og en gruppe av ting på samme måte
+Hus
+ ├── Etasje
+ │    ├── Rom
+ │         ├── Device (lampe, sensor, etc.)
+
+Du kan slå av lys i en spesefik lampe/lys, eller slå av alt lys i rommet/etasjen/huset
+Du lager en metode f.eks turn_off() som skrur av alle
+
+Med Composite:
+lamp.turn_off()
+room.turn_off()
+house.turn_off()
+
+Uten Composite:
+lamp.turn_off()
+room.turn_off_all_devices()
+house.turn_off_everything()
+
+5. Divide and Conquer
+I.      Dele det opp i mindre delproblemer
+II.     Løse hvert delproblem (ofte rekursivt)
+III.    Kombinere resultatene til en hel løsning
+
+I algoritmer f.eks mergesort, deler opp en lsite i mindre deler, sorterer, og settes sammen igjen
+
+I traversering av objektstrukturer har vi gjort dette på en måte med å dele opp huset i etasjer, etasjene i rom, osv.
+def turn_off(thing):
+    # base case: device
+    if isinstance(thing, Device):
+        thing.turn_off()
+
+    # delproblem: room → devices
+    elif isinstance(thing, Room):
+        for device in thing.devices:
+            turn_off(device)
+
+    # delproblem: floor → rooms
+    elif isinstance(thing, Floor):
+        for room in thing.rooms:
+            turn_off(room)
+
+    # delproblem: house → floors
+    elif isinstance(thing, SmartHouse):
+        for floor in thing.get_floors():
+            turn_off(floor)
+Når du kaller turn_off(house)
+    House
+        → deler opp i floors
+         → deler opp i rooms
+          → deler opp i devices
+           → slår av device
+
+6. Serialisering
+Serialisering gjør data/objekter om til et format som kan lagres eller sendes.
+Eksempel: et Python-objekt kan ikke sendes direkte over nettverket eller lagres i en tekstfil uten å konverteres først.
+# Python dictionary
+person = {
+    "navn": "Ola",
+    "alder": 22
+}
+Dette serialiseres til JSON, CSV, XML eller Pickle
+{
+  "navn": "Ola",
+  "alder": 22
+}
+
+7. DBMS
+Et database management system, DBMS, er programvaren som styrer databasen. Vi har brukt SQLlite og lest av tabeller.
+DBMS gjør at vi kan:
+Lagre data strukturert
+Hente data effektivt
+Oppdatere og slette data
+Bruke SQL
+Håndtere flere brukere
+Sikre dataintegritet
+
+Fordeler med DBMS:
+Rask søking
+Mindre dataduplisering
+Bedre struktur
+Kan håndtere store datamengder
+
+Ulemper:
+Mer komplekst enn en vanlig fil
+Krever oppsett
+Feil design kan gi treg database
+
+8. SQL
+SQL er språket vi bruker for å kommunisere med relasjonsdatabaser.
+SQL	    Betyr
+SELECT	hente data
+INSERT	legge inn/opprette data
+UPDATE	endre data
+DELETE	slette data
+
+SELECT navn, epost  (Velger hvilke kolonner vi vil ha)
+FROM bruker         (Velger fra hvilken tabell)
+WHERE alder > 18;   (Velger hvilke rader i kolonnene vi vil ha)
+
+8. Aggreggering SQL
+Aggreggering betyr at man lager én verdi basert på flere rader.
+| Funksjon  | Betyr         |
+| --------- | ------------- |
+| `COUNT()` | teller        |
+| `SUM()`   | summerer      |
+| `AVG()`   | gjennomsnitt  |
+| `MIN()`   | laveste verdi |
+| `MAX()`   | høyeste verdi |
+
+SELECT AVG(alder)
+FROM bruker;
+Gjennomsnittsalder fra kolonne alder og tabell bruker
+
+9. JOIN SQL
+JOIN brukes når data ligger i flere tabeller.
+
+Eksempel:
+
+Tabell kunde:
+id	navn
+1	Ola
+2	Kari
+
+Tabell ordre:
+id	kunde_id	produkt
+1	    1	    Lampe
+2	    2	    Sensor
+
+SQL Kode:
+SELECT kunde.navn, ordre.produkt
+FROM kunde
+INNER JOIN ordre
+ON kunde.id = ordre.kunde_id;
+
+Resultat:
+| navn | produkt |
+| ---- | ------- |
+| Ola  | Lampe   |
+| Kari | Sensor  |
+
+INNER JOIN → kun rader som matcher i begge tabeller
+LEFT JOIN → alle rader fra venstre tabell, selv uten match
+
+10. SQL og Python
+Tilkobling mellom Python og en database skjer ved at man oppretter en connection og bruker en cursor til å sende SQL-spørringer.
+Python kode:
+import sqlite3
+
+conn = sqlite3.connect("database.db")
+cursor = conn.cursor()
+
+cursor.execute("SELECT * FROM bruker")
+rader = cursor.fetchall()
+
+conn.close()
+
+connect() kobler til databasen
+cursor brukes til å sende SQL-spørringer
+execute() kjører SQL
+fetchall() henter resultatet
+commit() brukes etter INSERT, UPDATE og DELETE
+
+Eksempel:
+cursor.execute(
+    "INSERT INTO bruker (navn, epost) VALUES (?, ?)",
+    ("Ola", "ola@mail.no")
+)
+
+conn.commit()
+
+11. Distribuerte applikasjoner
+En distribuert applikasjon er et system der flere maskiner samarbeider over nettverk.
+
+Klient → forespørsel → Server
+Klient ← svar ← Server
+
+Når du åpner en nettside:
+Nettleseren er klienten
+Webserveren mottar forespørselen
+Serveren sender tilbake HTML, JSON eller annen data
+
+Eksempler:
+Nettbank
+Nettside med server og klient
+
+12. Protokoller
+En protokoll er et sett regler for kommunikasjon.
+| Protokoll | Brukes til                  |
+| --------- | --------------------------- |
+| HTTP      | webkommunikasjon            |
+| TCP       | pålitelig transport         |
+| UDP       | rask transport uten garanti |
+| IP        | adressering og ruting       |
+| DHCP      | automatisk IP-adresse       |
+| DNS       | navn til IP-adresse         |
+
+13. TCP/IP-modellen
+TCP/IP deles ofte inn i fire lag:
+| Lag         | Eksempel        | Hva det gjør            |
+| ----------- | --------------- | ----------------------- |
+| Applikasjon | HTTP, DNS, DHCP | tjenester/programmer    |
+| Transport   | TCP, UDP        | portnummer og transport |
+| Internett   | IP              | adressering og ruting   |
+| Link        | Ethernet, WiFi  | fysisk/lokal overføring |
+
+Host
+En host er en enhet som sender eller mottar data.
+
+Eksempler:
+PC
+Mobil
+Server
+
+Switch
+En switch kobler sammen enheter i samme lokale nettverk.
+Den bruker vanligvis MAC-adresser på linklaget.
+
+Ruter
+En ruter kobler sammen ulike nettverk.
+Den bruker IP-adresser på internettlaget.
+
+| Enhet  | Jobber mest med     |
+| ------ | ------------------- |
+| Switch | MAC-adresser        |
+| Ruter  | IP-adresser         |
+| Host   | hele TCP/IP-stacken |
+
+14. Nettverksarkitektur
+MAC-adresse
+Brukes lokalt på linklaget.
+MAC-adressen brukes for å sende data i samme lokale nettverk.
+Eksempel:
+A4:5E:60:C2:11:9F
+
+
+IP-adresse
+Brukes for å finne riktig maskin over nettverk.
+Eksempel:
+192.168.1.20
+
+Port
+Brukes for å finne riktig program på maskinen.
+Eksempel:
+192.168.1.20:80
+192.168.1.20 er maskinen sin adresse og 80 er programmet sin port
+
+15. TCP og UDP
+TCP
+TCP er pålitelig.
+Det betyr at den:
+Sjekker at data kommer frem
+Sender på nytt hvis noe mangler
+Setter data i riktig rekkefølge
+Bruker forbindelse mellom klient og server
+
+Brukes til:
+Nettsider
+E-post
+Filoverføring
+
+UDP
+UDP er raskere, men upålitelig.
+Det betyr at den har:
+Ingen garanti for levering
+Ingen automatisk retransmisjon
+Lavere overhead
+
+Brukes til:
+Sanntidsdata
+Streaming
+Gaming
+DNS
+
+| TCP                | UDP            |
+| ------------------ | -------------- |
+| Pålitelig          | Upålitelig     |
+| Tregere            | Raskere        |
+| Byte-strøm         | Datagram       |
+| Bruker forbindelse | Connectionless |
+
+16. Encapsulation og decapsulation
+Når data sendes, pakkes det inn lag for lag. Disse blir pakket som en russisk dukke, utenpå hverandre.
+
+Eksempel når en klient sender HTTP-data:
+HTTP-data
+→ TCP-segment
+→ IP-pakke
+→ Ethernet-frame
+Dette kalles encapsulation.
+
+Når mottakeren får data, pakkes det ut igjen:
+Ethernet-frame
+→ IP-pakke
+→ TCP-segment
+→ HTTP-data
+Dette kalles decapsulation.
+
+En enkel analogi
+HTTP-data = brev
+TCP = konvolutt med info om mottaker (port)
+IP = adresse på huset
+Ethernet = postbilens system
+
+17. Sockets
+En socket er et endepunkt for nettverkskommunikasjon.
+
+Den består ofte av:
+IP-adresse + port
+
+Eksempel:
+192.168.1.10:5000
+
+18. Multiplexing og demultiplexing
+Multiplexing
+Dette handler om porter. Flere programmer på samme maskin kan sende data samtidig.
+
+Eksempel:
+Nettleser → TCP pakker (port 443)
+Spotify → TCP/UDP pakker (annen port)
+Discord → egne pakker (annen port)
+
+Transportlaget pakker dette sammen og sender det via nettverket.
+
+Demultiplexing
+Når data kommer inn, brukes portnummeret til å sende data til riktig program.
+
+Eksempel:
+Data til port 80 → webserver
+Data til port 22 → SSH-server
+Data til port 53 → DNS
+
+Multiplexing → mange porter → én kanal ut
+Demultiplexing → én kanal inn → riktig mottaker
+
+19. REST og HTTP
+REST er en måte å lage web-API-er på.
+
+HTTP-metoder:
+| HTTP   | Betyr                   | SQL-lignende |
+| ------ | ----------------------- | ------------ |
+| GET    | hente data              | SELECT       |
+| POST   | opprette data           | INSERT       |
+| PUT    | oppdatere/erstatte data | UPDATE       |
+| DELETE | slette data             | DELETE       |
+
+URL
+
+En URL peker på en ressurs.
+
+Eksempel:
+https://example.com/users/5
+
+Kan deles opp slik:
+| Del           | Betyr      |
+| ------------- | ---------- |
+| `https`       | protokoll  |
+| `example.com` | domenenavn |
+| `/users/5`    | ressurs    |
+
+
+20. Esktra
+
+| Tema            | Viktig forskjell             |
+| --------------- | ---------------------------- |
+| SQL vs HTTP     | database vs web/API          |
+| TCP vs UDP      | pålitelig vs rask/upålitelig |
+| IP vs port      | maskin vs program            |
+| ruter vs switch | nettverk vs lokalt nett      |
+| WHERE vs HAVING | radfilter vs gruppefilter    |
+| SELECT vs JOIN  | hente data vs koble tabeller |
