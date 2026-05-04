@@ -1,3 +1,7 @@
+"""
+    Oversetter Client (Bestemmer hvordan man oversetter mellom JSON og Python objekter)
+    """
+
 import json
 
 BASE_URL = "http://localhost:8000"
@@ -7,11 +11,6 @@ LIGHT_BULB_ACTUATOR_DID = "6b1c5f6b-37f6-4e3d-9145-1cfbe2f1fc28"
 
 
 class SensorMeasurement:
-    """
-    Class representing measurements exchanged between temperature sensor client
-    and cloud service in JSON format
-    """
-
     def __init__(self, timestamp, value, unit):
         self.timestamp = timestamp
         self.value = value
@@ -31,11 +30,6 @@ class SensorMeasurement:
 
 
 class ActuatorState:
-    """
-    Class representing actuator state exchanged between actuator client
-    and cloud service in JSON format
-    """
-
     def __init__(self, state):
         self.state = state
 

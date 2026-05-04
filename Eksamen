@@ -1,0 +1,52 @@
+DEL A
+demo_house.py:
+Lager startdata for huset.
+Bygger opp DEMO_HOUSE med etasjer, rom, sensorer og aktuatorer.
+
+
+DEL B
+persistence.py:
+Brukes til database/SQLite.
+Ikke brukt direkte i del C slik api.py står nå, fordi api.py bruker DEMO_HOUSE.
+
+
+DEL C
+[ Nettside (HTML/JS) ]        [ app.py / sensorclient / actuatorclient ]
+           ↓                                ↓
+        HTTP requests (fetch / requests)
+                         ↓
+                    API (api.py)
+                         ↓
+                domain.py (DEMO_HOUSE)
+                         ↓
+                    dto.py
+                         ↓
+                JSON tilbake
+
+
+Client (app.py, sensorclient.py, actuatorclient.py):
+Python → JSON (common.py / requests)
+
+↓ over HTTP
+
+API:
+Mottar request (api.py)
+JSON → Python (dto.py)
+Bruker domain.py og DEMO_HOUSE
+Python → JSON (dto.py)
+
+↓ over HTTP
+
+Client:
+JSON → Python (common.py)
+
+Eksempel: hente actuator state
+
+1. Client sender GET-request
+2. api.py mottar requesten
+3. api.py bruker smarthouse.get_device_by_id(uuid)
+4. Den finner riktig device i DEMO_HOUSE
+5. device.is_active() leser state fra actuator-objektet
+6. dto.py/formaterer data som JSON
+7. API sender JSON tilbake til client
+8. common.py gjør JSON om til Python-objekt på client-siden

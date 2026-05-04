@@ -1,3 +1,7 @@
+"""
+    Bruker API (spør om API tilstand, oppdaterer egen, logger, gjentar)
+    """
+
 import time
 import requests
 import logging
@@ -11,20 +15,12 @@ LIGHTBULB_CLIENT_SLEEP_TIME = 4
 
 
 class ActuatorClient:
-    """
-    Actuator client representing the physical light bulb in the house
-    using the cloud service to set its state
-    """
 
     def __init__(self, did):
         self.did = did
         self.state = common.ActuatorState("off")
 
     def get_state(self) -> str:
-        """
-        This method sends a GET request to the cloud service to
-        read/obtain the current state of the light bulb actuator.
-        """
 
         logging.info(f"Actuator Client {self.did} retrieving state")
 
@@ -52,11 +48,6 @@ class ActuatorClient:
             return self.state.state
 
     def run(self):
-        """
-        This method runs in a loop reguarly sending a request to the cloud service
-        to set the current state of the light bulb in accordance with the state
-        in the cloud service
-        """
 
         while True:
             new_state = self.get_state()

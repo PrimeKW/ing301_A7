@@ -1,3 +1,5 @@
+"""Logikken/Modellen (Hvordan huset er bygget opp, hvilke objekter som finnes, og hvordan man endrer/bruker informasjonen)"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -102,6 +104,8 @@ class Sensor(Device):
         measurement = Measurement(timestamp, value, unit)
         self._measurements.append(measurement)
         return measurement
+
+    """Denen metodenen brukes av API.py når Sensorclienten sender ny måling"""
 
     def last_measurement(self) -> Optional[Measurement]:
         if not self._measurements:

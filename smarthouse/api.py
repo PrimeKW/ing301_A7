@@ -1,3 +1,6 @@
+"""
+    Mottar/Sender Requests (leser/endrer data, og finner rikitg device)
+    """
 import os
 from pathlib import Path
 

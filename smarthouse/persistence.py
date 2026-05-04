@@ -1,3 +1,5 @@
+"""Kobling mellom SQL/databasen og Python objekter"""
+
 import sqlite3
 from typing import Optional
 from smarthouse.domain import Measurement, SmartHouse, Floor, Room, Sensor, Actuator

@@ -1,3 +1,8 @@
+"""
+    Brukergrensesnitt (lar brukeren styre systemet)
+    """
+
+
 import common
 import requests
 

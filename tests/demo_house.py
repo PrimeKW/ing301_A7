@@ -1,3 +1,5 @@
+"""En database i som bruker python objekter og er ikke lagret som en fil, men i minnet"""
+
 from smarthouse.domain import SmartHouse, Sensor, Actuator
 
 DEMO_HOUSE = SmartHouse()

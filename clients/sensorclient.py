@@ -1,3 +1,7 @@
+"""
+    Sender til API (Måler en temp, sender, gjenta)
+    """
+
 import time
 import math
 import requests

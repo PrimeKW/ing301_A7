@@ -1,3 +1,7 @@
+"""
+    Oversetter API (Bestemmer hvordan man oversetter mellom JSON og Python objekter)
+    """
+
 from __future__ import annotations
 from typing import Literal
 
