@@ -1,13 +1,14 @@
 """
     Oversetter Client (Bestemmer hvordan man oversetter mellom JSON og Python objekter)
+    Denne bruker Clientene
     """
 
 import json
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8000"  #IP som requests sendes til
 
-TEMPERATURE_SENSOR_DID = "4d8b1d62-7921-4917-9b70-bbd31f6e2e8e"
-LIGHT_BULB_ACTUATOR_DID = "6b1c5f6b-37f6-4e3d-9145-1cfbe2f1fc28"
+TEMPERATURE_SENSOR_DID = "4d8b1d62-7921-4917-9b70-bbd31f6e2e8e" # Sensoren som gjør målinger
+LIGHT_BULB_ACTUATOR_DID = "6b1c5f6b-37f6-4e3d-9145-1cfbe2f1fc28" #  Actuator som endres
 
 
 class SensorMeasurement:
@@ -32,9 +33,6 @@ class SensorMeasurement:
 class ActuatorState:
     def __init__(self, state):
         self.state = state
-
-    def set_state(self, new_state):
-        self.state = new_state
 
     def to_json_str(self):
         return json.dumps(self.__dict__)

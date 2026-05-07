@@ -1,7 +1,13 @@
 """
     Bruker API (spør om API tilstand, oppdaterer egen, logger, gjentar)
     """
-
+"""
+Bruker
+→ appen sender ny verdi til serveren
+→ serveren lagrer verdien
+→ actuator client spør serveren om aktuell verdi
+→ actuator client oppdaterer actuator/state
+    """
 import time
 import requests
 import logging
