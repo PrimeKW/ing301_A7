@@ -20,13 +20,13 @@ Du bruker samme metode, men de gjør forskjellige ting
 3. UML til Python
 Klasse = class
 Attributt = variabler i __init__ f.eks (device_type eller room)
-Arv = class Sensor(Device) Sensor arver fra Device
+Arv = class Sensor(Device) Sensor arver fra Device. Sensor er en type device.
 Assosiasjon
     ↓
 class Room:
     def __init__(self, floor: Floor, ...):
         self.floor = floor
-Assosierer med at et room tilhører et floor/etasje
+Assosierer med at et room tilhører et floor/etasje. Room har en referanse til floor
 
 4. Design pattern Composite
 Du kan behandle en ting og en gruppe av ting på samme måte
@@ -335,6 +335,8 @@ Ethernet = postbilens system
 
 17. Sockets
 En socket er et endepunkt for nettverkskommunikasjon.
+
+Socket-programmering betyr at man lager programmer som kommuniserer over nettverk ved hjelp av sockets. En server kan lytte på en port, mens en klient kobler seg til denne IP-adressen og porten.
 
 Den består ofte av:
 IP-adresse + port
