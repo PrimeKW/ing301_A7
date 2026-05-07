@@ -328,6 +328,15 @@ DNS
 | Byte-strøm         | Datagram       |
 | Bruker forbindelse | Connectionless |
 
+Med UDP:
+Klient → sender pakke → Server
+
+TCP lager en forbindelse:
+Klient ⇄ Server
+(forbindelse etableres)
+
+→ data sendes
+
 16. Encapsulation og decapsulation
 Når data sendes, pakkes det inn lag for lag. Disse blir pakket som en russisk dukke, utenpå hverandre.
 
