@@ -6,16 +6,37 @@ class Konto:
     def sett_inn(self, beløp):
         self._saldo += beløp
 Du manipulerer saldo gjennom metoder og ikke direkte
+Mer komplekst:
+class Konto:
+    def __init__(self, saldo):
+        self._saldo = saldo
+
+    def sett_inn(self, beløp):
+        if beløp > 0:
+            self._saldo += beløp
+        else:
+            print("Beløpet må være positivt")
+
+    def ta_ut(self, beløp):
+        if beløp <= self._saldo:
+            self._saldo -= beløp
+        else:
+            print("Ikke nok penger")
+Du manipulerer saldo gjennom metoder og ikke direkte
 
 2. Polymorfisme
-class Hund:
+class Dyr:
+    def lyd(self):
+        pass
+
+class Hund(Dyr):
     def lyd(self):
         return "bjeff"
 
-class Katt:
+class Katt(Dyr):
     def lyd(self):
         return "mjau"
-Du bruker samme metode, men de gjør forskjellige ting
+Du bruker samme metode, men de gjør forskjellige ting. Polymorfisme brukes ofte med arv.
 
 3. UML til Python
 Klasse = class
@@ -26,7 +47,7 @@ Assosiasjon
 class Room:
     def __init__(self, floor: Floor, ...):
         self.floor = floor
-Assosierer med at et room tilhører et floor/etasje. Room har en referanse til floor
+Assosierer med at et room tilhører et floor/etasje. Room har en referanse til floor, siden room tilhører en etasje.
 
 4. Design pattern Composite
 Du kan behandle en ting og en gruppe av ting på samme måte
@@ -56,25 +77,19 @@ III.    Kombinere resultatene til en hel løsning
 I algoritmer f.eks mergesort, deler opp en lsite i mindre deler, sorterer, og settes sammen igjen
 
 I traversering av objektstrukturer har vi gjort dette på en måte med å dele opp huset i etasjer, etasjene i rom, osv.
-def turn_off(thing):
-    # base case: device
-    if isinstance(thing, Device):
-        thing.turn_off()
+class Room:
+    def turn_off(self):
+        for device in self.devices:
+            device.turn_off()
+class Floor
+    def turn_off(self)
+        for room in self.rooms
+            room.turn_off()
+class House:
+    def turn_off(self):
+        for floor in self.floors:
+            floor.turn_off()
 
-    # delproblem: room → devices
-    elif isinstance(thing, Room):
-        for device in thing.devices:
-            turn_off(device)
-
-    # delproblem: floor → rooms
-    elif isinstance(thing, Floor):
-        for room in thing.rooms:
-            turn_off(room)
-
-    # delproblem: house → floors
-    elif isinstance(thing, SmartHouse):
-        for floor in thing.get_floors():
-            turn_off(floor)
 Når du kaller turn_off(house)
     House
         → deler opp i floors
@@ -85,19 +100,20 @@ Når du kaller turn_off(house)
 6. Serialisering
 Serialisering gjør data/objekter om til et format som kan lagres eller sendes.
 Eksempel: et Python-objekt kan ikke sendes direkte over nettverket eller lagres i en tekstfil uten å konverteres først.
-# Python dictionary
+Python
 person = {
     "navn": "Ola",
     "alder": 22
 }
 Dette serialiseres til JSON, CSV, XML eller Pickle
+JSON
 {
   "navn": "Ola",
   "alder": 22
 }
 
 7. DBMS
-Et database management system, DBMS, er programvaren som styrer databasen. Vi har brukt SQLlite og lest av tabeller.
+Et database management system, DBMS, er programvaren som styrer databasen. Vi har brukt SQLite og lest av tabeller.
 DBMS gjør at vi kan:
 Lagre data strukturert
 Hente data effektivt
@@ -127,10 +143,10 @@ DELETE	slette data
 
 SELECT navn, epost  (Velger hvilke kolonner vi vil ha)
 FROM bruker         (Velger fra hvilken tabell)
-WHERE alder > 18;   (Velger hvilke rader i kolonnene vi vil ha)
+WHERE alder > 18;   (Velger hvilke rader som skal tas med i resultatet.)
 
-8. Aggreggering SQL
-Aggreggering betyr at man lager én verdi basert på flere rader.
+8. Aggregering SQL
+Aggregering betyr at man lager én verdi basert på flere rader.
 | Funksjon  | Betyr         |
 | --------- | ------------- |
 | `COUNT()` | teller        |
@@ -159,10 +175,10 @@ id	kunde_id	produkt
 2	    2	    Sensor
 
 SQL Kode:
-SELECT kunde.navn, ordre.produkt
-FROM kunde
-INNER JOIN ordre
-ON kunde.id = ordre.kunde_id;
+SELECT kunde.navn, ordre.produkt    Velger tabell og rad
+FROM kunde                          Velger hovedtabell
+INNER JOIN ordre                    Velger tabell som skal kobles til
+ON kunde.id = ordre.kunde_id;       Kobler rader der kunde.id matcher ordre.kunde_id.
 
 Resultat:
 | navn | produkt |
@@ -170,7 +186,7 @@ Resultat:
 | Ola  | Lampe   |
 | Kari | Sensor  |
 
-INNER JOIN → kun rader som matcher i begge tabeller
+INNER JOIN → kun rader som matcher i begge tabeller, denne må ha en ON funskjon for å finne riktig en match
 LEFT JOIN → alle rader fra venstre tabell, selv uten match
 
 10. SQL og Python
@@ -179,10 +195,10 @@ Python kode:
 import sqlite3
 
 conn = sqlite3.connect("database.db")
-cursor = conn.cursor()
+cursor = conn.cursor()                  Oppsett delen
 
-cursor.execute("SELECT * FROM bruker")
-rader = cursor.fetchall()
+cursor.execute("SELECT * FROM bruker")  Velger alle kolonner fra tabell bruker
+rader = cursor.fetchall()               Ut dataen blir da alle rader og alle kolonner
 
 conn.close()
 
@@ -198,7 +214,7 @@ cursor.execute(
     ("Ola", "ola@mail.no")
 )
 
-conn.commit()
+conn.commit()                       Permanente endringer trenger commit
 
 11. Distribuerte applikasjoner
 En distribuert applikasjon er et system der flere maskiner samarbeider over nettverk.
@@ -215,16 +231,18 @@ Eksempler:
 Nettbank
 Nettside med server og klient
 
+Distribuerte systemer gjør det mulig å dele arbeid mellom flere maskiner og håndtere mange brukere samtidig.
+
 12. Protokoller
-En protokoll er et sett regler for kommunikasjon.
+En protokoll er et sett regler for kommunikasjon over et nettverk.
 | Protokoll | Brukes til                  |
 | --------- | --------------------------- |
-| HTTP      | webkommunikasjon            |
-| TCP       | pålitelig transport         |
+| HTTP      | webkommunikasjon            |     Brukes når nettleseren henter nettsiden
+| TCP       | pålitelig transport         |     Sørger for at data kommker fram i riktig rekkefølge
 | UDP       | rask transport uten garanti |
 | IP        | adressering og ruting       |
 | DHCP      | automatisk IP-adresse       |
-| DNS       | navn til IP-adresse         |
+| DNS       | navn til IP-adresse         |     Oversetter google.com til en IP-adresse
 
 13. TCP/IP-modellen
 TCP/IP deles ofte inn i fire lag:
@@ -266,12 +284,12 @@ A4:5E:60:C2:11:9F
 
 
 IP-adresse
-Brukes for å finne riktig maskin over nettverk.
+Brukes for å finne riktig maskin over nettverk og internett.
 Eksempel:
 192.168.1.20
 
 Port
-Brukes for å finne riktig program på maskinen.
+Brukes for å finne riktig program/tjeneste på maskinen.
 Eksempel:
 192.168.1.20:80
 192.168.1.20 er maskinen sin adresse og 80 er programmet sin port
@@ -314,17 +332,17 @@ DNS
 Når data sendes, pakkes det inn lag for lag. Disse blir pakket som en russisk dukke, utenpå hverandre.
 
 Eksempel når en klient sender HTTP-data:
-HTTP-data
+HTTP-data           ← Innerste laget  Start
 → TCP-segment
 → IP-pakke
-→ Ethernet-frame
-Dette kalles encapsulation.
+→ Ethernet-frame    ← Ytterste laget  Slutt
+Dette kalles encapsulation. Dette er eksempel på en nettside
 
 Når mottakeren får data, pakkes det ut igjen:
-Ethernet-frame
+Ethernet-frame      ← Ytterste laget  Start
 → IP-pakke
 → TCP-segment
-→ HTTP-data
+→ HTTP-data         ← Innerste laget  Slutt
 Dette kalles decapsulation.
 
 En enkel analogi
@@ -336,7 +354,9 @@ Ethernet = postbilens system
 17. Sockets
 En socket er et endepunkt for nettverkskommunikasjon.
 
-Socket-programmering betyr at man lager programmer som kommuniserer over nettverk ved hjelp av sockets. En server kan lytte på en port, mens en klient kobler seg til denne IP-adressen og porten.
+Socket-programmering betyr at man lager programmer som kommuniserer over nettverk ved hjelp av sockets.
+En server kan lytte på en port, mens en klient kobler seg til denne IP-adressen og porten.
+Eneklt sagt en kommunikasjonskanal mellom to programmer over nettverk
 
 Den består ofte av:
 IP-adresse + port
@@ -344,16 +364,24 @@ IP-adresse + port
 Eksempel:
 192.168.1.10:5000
 
+Det er ikke gjort direkte socket programmering i prosjektet. Vi brukte FastAPI og Uvicorn.
+Når vi kjører uvicorn.run(app, host="127.0.0.1", port=8000) i api.py, starter vi en webserver som lytter på en IP-adresse og port.
+Uvicorn håndterer socket-kommunikasjonen for oss, mens vi jobber på HTTP/API-nivå med GET, PUT og DELETE.
+
 18. Multiplexing og demultiplexing
 Multiplexing
 Dette handler om porter. Flere programmer på samme maskin kan sende data samtidig.
 
 Eksempel:
-Nettleser → TCP pakker (port 443)
-Spotify → TCP/UDP pakker (annen port)
-Discord → egne pakker (annen port)
+Nettleser → HTTPS (port 443)
+Spotify → annen port
+Discord → annen port
 
 Transportlaget pakker dette sammen og sender det via nettverket.
+
+Mange programmer
+→ mange porter
+→ én nettverksforbindelse ut
 
 Demultiplexing
 Når data kommer inn, brukes portnummeret til å sende data til riktig program.
@@ -367,7 +395,13 @@ Multiplexing → mange porter → én kanal ut
 Demultiplexing → én kanal inn → riktig mottaker
 
 19. REST og HTTP
-REST er en måte å lage web-API-er på.
+REST er en måte å lage web-API-er på der ressurser identifiseres med URL-er og håndteres med HTTP-metoder.
+
+REST bygger på noen enkle prinsipper:
+Ressurser identifiseres med URL-er
+HTTP-metoder brukes for operasjoner på ressursene
+Klient og server er separert
+Kommunikasjon er stateless, som betyr at hver request inneholder informasjonen som trengs
 
 HTTP-metoder:
 | HTTP   | Betyr                   | SQL-lignende |
@@ -377,8 +411,12 @@ HTTP-metoder:
 | PUT    | oppdatere/erstatte data | UPDATE       |
 | DELETE | slette data             | DELETE       |
 
-URL
+Eksempel fra prosjektet:
+@app.get("/smarthouse/device/{uuid}")               GET Henter data
+@app.put("/smarthouse/actuator/{uuid}/state")       PUT Oppdaterer tilstanden
+@app.delete("/smarthouse/sensor/{uuid}/current")    Delete  Sletter måling/data
 
+URL
 En URL peker på en ressurs.
 
 Eksempel:
@@ -392,7 +430,7 @@ Kan deles opp slik:
 | `/users/5`    | ressurs    |
 
 
-20. Esktra
+20. Ekstra
 
 | Tema            | Viktig forskjell             |
 | --------------- | ---------------------------- |
