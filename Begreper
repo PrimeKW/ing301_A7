@@ -449,3 +449,18 @@ Kan deles opp slik:
 | ruter vs switch | nettverk vs lokalt nett      |
 | WHERE vs HAVING | radfilter vs gruppefilter    |
 | SELECT vs JOIN  | hente data vs koble tabeller |
+
+21. Sette opp test av prosjektet C
+Windows Powershell
+cd "C:\Users\kwsaa\Documents\GitHub\ing301_A7"
+Om du blir stoppet av Windows: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+.\venv\Scripts\activate
+uvicorn smarthouse.api:app --reload
+Gå til nettsiden http://127.0.0.1:8000
+
+Ny terminal
+For å kjøre terminal klienten
+python clients/app.py
+
+For å sjekke simuleringen av temp
+python clients/sensorclient.py
