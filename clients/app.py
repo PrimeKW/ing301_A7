@@ -43,6 +43,13 @@ class SmartHouseApp:
             return None
 
     def get_temperature(self):
+
+        """Appen
+        → sender request til localhost/serveren på PC-en
+        → serveren har en simulert sensorverdi
+        → serveren sender temperaturen tilbake
+        """
+
         url = f"{common.BASE_URL}/smarthouse/sensor/{self.sensor_did}/current"
 
         try:
@@ -58,6 +65,7 @@ class SmartHouseApp:
         except requests.RequestException as e:
             print(f"Error while getting temperature: {e}")
             return None
+
 
     def main(self):
         is_active = True

@@ -1,6 +1,18 @@
 """
     Mottar/Sender Requests (leser/endrer data, og finner rikitg device)
     """
+"""
+                    [ SensorClient ]
+                    ↓ PUT temperatur
+
+                    [ API / api.py ]
+                                         ↑
+            ↑                            ↓
+ GET temperatur/PUT lys-state     GET lys-state
+                                         ↑
+       ↑                                 ↓
+ [ SmartHouseApp ]              [ ActuatorClient ]
+"""
 import os
 from pathlib import Path
 
@@ -20,8 +32,8 @@ from smarthouse.dto import (
     MeasurementInfo,
 )
 
-app = FastAPI()
-smarthouse = DEMO_HOUSE
+app = FastAPI() #   Lager API-serveren
+smarthouse = DEMO_HOUSE # Dataen huset skal jobbe med
 
 if not (Path.cwd() / "www").exists():
     os.chdir(Path.cwd().parent)

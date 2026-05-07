@@ -1,6 +1,15 @@
 """
     Sender til API (Måler en temp, sender, gjenta)
     """
+"""
+SensorClient
+    ↓ måler temperatur
+PUT /sensor/current
+    ↓
+Server lagrer temperatur
+    ↓
+Bruker-appen henter temperatur senere med GET
+"""
 
 import time
 import math

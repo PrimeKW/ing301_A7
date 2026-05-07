@@ -1,14 +1,14 @@
 """
     Oversetter API (Bestemmer hvordan man oversetter mellom JSON og Python objekter)
+    Denne bruker APIet
     """
+"""Oversetter API mellom Python-objekter og JSON."""
 
-from __future__ import annotations
 from typing import Literal
-
 from pydantic import BaseModel
+
 from smarthouse.domain import (
     Actuator,
-    ActuatorWithSensor,
     Device,
     Floor,
     Room,
@@ -36,7 +36,7 @@ class SmartHouseInfo(BaseModel):
 
 class FloorInfo(BaseModel):
     fid: int
-
+    rooms: list[int]
 
     @staticmethod
     def from_obj(floor: Floor) -> "FloorInfo":
@@ -68,13 +68,11 @@ class DeviceInfo(BaseModel):
     id: str
     device_name: str
     device_type: str
-    category: Literal["sensor", "actuator", "actuator_with_sensor"]
+    category: Literal["sensor", "actuator"]
 
     @staticmethod
     def from_obj(device: Device) -> "DeviceInfo":
-        if isinstance(device, ActuatorWithSensor):
-            category = "actuator_with_sensor"
-        elif isinstance(device, Sensor):
+        if isinstance(device, Sensor):
             category = "sensor"
         elif isinstance(device, Actuator):
             category = "actuator"
@@ -97,7 +95,9 @@ class MeasurementInfo(BaseModel):
     @staticmethod
     def from_obj(measurement: Measurement) -> "MeasurementInfo":
         return MeasurementInfo(
-            timestamp=measurement.timestamp.isoformat() if hasattr(measurement.timestamp, "isoformat") else str(measurement.timestamp),
+            timestamp=measurement.timestamp.isoformat()
+            if hasattr(measurement.timestamp, "isoformat")
+            else str(measurement.timestamp),
             value=measurement.value,
             unit=measurement.unit
         )

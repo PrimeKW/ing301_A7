@@ -1,7 +1,6 @@
 """Logikken/Modellen (Hvordan huset er bygget opp, hvilke objekter som finnes, og hvordan man endrer/bruker informasjonen)"""
 
 from __future__ import annotations
-
 from datetime import datetime
 from typing import Optional
 
@@ -11,9 +10,6 @@ class Measurement:
         self.timestamp = timestamp
         self.value = float(value)
         self.unit = str(unit)
-
-
-"""Etasje og rom"""
 
 
 class Floor:
@@ -47,9 +43,6 @@ class Room:
             self.devices.remove(device)
 
 
-"""Enheter"""
-
-
 class Device:
     def __init__(self, id: str, device_type: str, device_name: str, supplier: str):
         self.id = str(id)
@@ -64,9 +57,6 @@ class Device:
 
     def is_sensor(self) -> bool:
         return False
-
-    def get_device_type(self) -> str:
-        return self.device_type
 
 
 class Sensor(Device):
@@ -105,8 +95,6 @@ class Sensor(Device):
         self._measurements.append(measurement)
         return measurement
 
-    """Denen metodenen brukes av API.py når Sensorclienten sender ny måling"""
-
     def last_measurement(self) -> Optional[Measurement]:
         if not self._measurements:
             return None
@@ -119,9 +107,6 @@ class Sensor(Device):
         if not self._measurements:
             return None
         return self._measurements.pop()
-
-    def clear_measurements(self) -> None:
-        self._measurements.clear()
 
 
 class Actuator(Device):
@@ -144,25 +129,6 @@ class Actuator(Device):
 
     def is_active(self) -> bool:
         return self._active
-
-    def set_state(self, active: bool, target_value: Optional[float] = None) -> None:
-        if active:
-            self.turn_on(target_value)
-        else:
-            self.turn_off()
-
-
-class ActuatorWithSensor(Actuator):
-    def __init__(
-        self,
-        id: str,
-        device_type: str,
-        device_name: str,
-        supplier: str,
-        sensor: Sensor
-    ):
-        super().__init__(id, device_type, device_name, supplier)
-        self.sensor = sensor
 
 
 class SmartHouse:
@@ -214,18 +180,6 @@ class SmartHouse:
     def get_rooms(self) -> list[Room]:
         return list(self._rooms)
 
-    def get_room_by_id(self, rid: int) -> Optional[Room]:
-        for room in self._rooms:
-            if room.rid == int(rid):
-                return room
-        return None
-
-    def get_rooms_on_floor(self, level: int) -> list[Room]:
-        floor = self.get_floor_by_level(level)
-        if floor is None:
-            return []
-        return list(floor.rooms)
-
     def get_area(self) -> float:
         return round(sum(room.room_size for room in self._rooms), 2)
 
@@ -237,9 +191,3 @@ class SmartHouse:
             if device.id == str(device_id):
                 return device
         return None
-
-    def get_sensors(self) -> list[Sensor]:
-        return [device for device in self._devices if device.is_sensor()]
-
-    def get_actuators(self) -> list[Actuator]:
-        return [device for device in self._devices if device.is_actuator()]
